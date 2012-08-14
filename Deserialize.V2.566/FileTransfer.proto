@@ -1,0 +1,83 @@
+package CmdlinkFileTransfer;
+
+message GetDirectory
+{
+    required string DirectoryName = 1;
+}
+
+message GetDirectoryResponse
+{
+    message DirEntry
+    {   
+        enum FileType
+        {
+            FileTypeDir = 0;
+            FileTypeFile = 1;
+            FileTypeSymlink = 2;
+            FileTypeOther = 3;
+        }
+
+        required string FileName = 1;
+        required uint64 Size = 2;
+        required fixed32 CreationDate = 3;
+        required fixed32 LastWriteDate = 4;
+        required uint32 Permissions = 5;
+        required FileType filetype = 6;
+    }
+
+    required string status = 1;
+    repeated DirEntry direntry = 2;
+}
+
+message GetFile
+{
+    required string FileName = 1;
+    optional uint64 StartOffset = 2;
+    optional uint64 Count = 3;  // 0 = all, not present = all
+}
+
+message DeleteFile
+{
+    required string FileName = 1;
+    optional bool AllUnits = 2; // set to true if file should be deleted from all units, not just hte one the message hits
+}
+
+message DeleteFileResponse
+{
+    required string Status = 1;
+}
+
+message GetAudioFile
+{
+    required string FileName = 1;
+    enum ConversionType
+    {
+        ConvertToLinear16 = 0;  // 16 bit PCM, WAV header
+        ConvertTouLaw = 1;      // 8 bit uLaw, WAV header
+        ConvertToaLaw = 2;      // 8 bit aLaw, WAV header
+        ConvertToMSADPCM = 3;   // 8 bit MS ADPCM, WAV header
+        ConvertToMp3 = 4;       // MP3 VBR, Xing header. 
+    };
+
+    optional ConversionType convert_to = 2; // if not set, no conversion is done
+    optional bool enable_agc = 3;           // enable Auto Gain Control, set gain to target level (0 to -30 dB).
+    optional int32 gain = 4;                // Set absolute gain (in dB)(if enable_agc is false). Set AGC target level (if agc is true)
+}
+
+message FileTransferQuery
+{
+    enum CommandType
+    {
+        CmdGetDirectory = 0;   // returns GetDirectoryResponse
+        CmdGetFile = 1;        // Get File retins raw file data, no ProtoBuffer.
+        CmdDelFile = 2;        // returns only 200 ok (no data).
+        CmdGetAudioFile = 3;   // GetAudioFile retins raw file data, no ProtoBuffer.
+    }
+
+    required CommandType Command = 1;
+    optional GetDirectory getdir = 2;
+    optional GetFile getfile = 3;
+    optional DeleteFile delfile = 4;
+    optional GetAudioFile getaudiofile = 5;
+}
+
